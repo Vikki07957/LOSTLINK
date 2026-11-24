@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Claim Requests - LOSTLINK{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1rem;">
+  
+  <div style="margin-bottom: 2rem;">
+    <span class="badge badge-category" style="margin-bottom: 0.5rem;">Ownership Verification</span>
+    <h1 style="font-size: 2rem; margin-bottom: 0.25rem;">Claim Management</h1>
+    <p style="color: var(--text-muted);">Inspect incoming claims on items you found, and track the status of claims you submitted.</p>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs-header">
+    <button class="tab-btn active" onclick="switchClaimTab('receivedClaims', this)">
+      <i class="fa-solid fa-inbox"></i>
+      Incoming Claims on Items I Found ({{ claims_received|length }})
+    </button>
+    <button class="tab-btn" onclick="switchClaimTab('submittedClaims', this)">
+      <i class="fa-solid fa-paper-plane"></i>
+      Claims I Submitted ({{ claims_submitted|length }})
+    </button>
+  </div>
+
+  <!-- Section 1: Claims Received on Items I Found -->
+  <div id="receivedClaims" class="claim-tab-pane">
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Found Item</th>
+              <th>Claimant</th>
+              <th>Submitted Proof</th>
+              <th>Contact Phone</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for claim in claims_received %}
+              <tr>
+                <td>
+                  <strong>{{ claim.item_title }}</strong>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">Filed on {{ claim.created_at }}</div>
+                </td>
+                <td>
+                  <div style="font-weight: 600;">{{ claim.claimant_name }}</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">{{ claim.claimant_email }}</div>
+                </td>
+                <td style="max-width: 280px;">
+                  <p style="font-size: 0.85rem; margin: 0; color: var(--navy-800); line-height: 1.4;">
+                    {{ claim.proof_description }}
+                  </p>
+                  {% if claim.proof_file_url %}
+                    <a href="{{ claim.proof_file_url }}" target="_blank" style="font-size: 0.78rem; font-weight: 600; color: var(--indigo-600); display: inline-block; margin-top: 0.25rem;">
+                      <i class="fa-solid fa-paperclip"></i> View Attached Proof
+                    </a>
+                  {% endif %}
+                </td>
+                <td>
+                  <span style="font-weight: 600; color: var(--navy-900);">
+                    <i class="fa-solid fa-phone" style="font-size: 0.75rem; color: var(--status-recovered);"></i>
+                    {{ claim.contact_phone }}
+                  </span>
+                </td>
+                <td>
+                  {% if claim.status == 'Approved' %}
+                    <span class="badge badge-recovered"><i class="fa-solid fa-check"></i> Approved</span>
+                  {% elif claim.status == 'Rejected' %}
+                    <span class="badge badge-lost"><i class="fa-solid fa-xmark"></i> Rejected</span>
+                  {% else %}
+                    <span class="badge badge-pending"><i class="fa-solid fa-clock"></i> Pending Review</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if claim.status == 'Pending' %}
+                    <div style="display: flex; gap: 0.4rem;">
+                      <form action="{{ url_for('approve_claim', claim_id=claim.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Approve this claim? This confirms the claimant as the legitimate owner.');">
+                        <button type="submit" class="btn btn-sm btn-primary" title="Approve Claim">
+                          <i class="fa-solid fa-check"></i> Approve
+                        </button>
+                      </form>
+                      <form action="{{ url_for('reject_claim', claim_id=claim.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Reject this claim if the proof does not match?');">
+                        <button type="submit" class="btn btn-sm btn-outline-secondary text-danger" title="Reject Claim">
+                          <i class="fa-solid fa-xmark"></i> Reject
+                        </button>
+                      </form>
+                    </div>
+                  {% else %}
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">Decided</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                  <i class="fa-solid fa-inbox" style="font-size: 2rem; color: #cbd5e1; margin-bottom: 0.5rem; display: block;"></i>
+                  No incoming claim requests on your reported items yet.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Claims I Submitted -->
+  <div id="submittedClaims" class="claim-tab-pane" style="display: none;">
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Target Item</th>
+              <th>Submitted Proof</th>
+              <th>Claim Date</th>
+              <th>Review Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for claim in claims_submitted %}
+              <tr>
+                <td>
+                  <strong>{{ claim.item_title }}</strong>
+                  <div style="font-size: 0.78rem; color: var(--text-muted);">Item ID: #{{ claim.item_id }}</div>
+                </td>
+                <td style="max-width: 320px;">
+                  <p style="font-size: 0.85rem; margin: 0; color: var(--navy-800);">{{ claim.proof_description }}</p>
+                </td>
+                <td style="font-size: 0.85rem;">{{ claim.created_at }}</td>
+                <td>
+                  {% if claim.status == 'Approved' %}
+                    <span class="badge badge-recovered"><i class="fa-solid fa-circle-check"></i> Approved! Ready for Handover</span>
+                  {% elif claim.status == 'Rejected' %}
+                    <span class="badge badge-lost"><i class="fa-solid fa-circle-xmark"></i> Claim Rejected</span>
+                  {% else %}
+                    <span class="badge badge-pending"><i class="fa-solid fa-hourglass-half"></i> Under Finder Review</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <a href="{{ url_for('item_detail', item_id=claim.item_id) }}" class="btn btn-sm btn-outline-primary">
+                    View Item
+                  </a>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                  You have not submitted any claim requests yet.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function switchClaimTab(tabId, btn) {
+    document.querySelectorAll('.claim-tab-pane').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).style.display = 'block';
+    btn.classList.add('active');
+  }
+</script>
+{% endblock %}

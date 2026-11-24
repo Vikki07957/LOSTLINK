@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Report Found Item - LOSTLINK{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1rem; max-width: 800px;">
+  <div class="card" style="border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); overflow: hidden;">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #075985, #0369a1, #0f172a); color: white; padding: 2.25rem 2rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+        <span class="badge" style="background: rgba(14, 165, 233, 0.25); color: #bae6fd; border: 1px solid rgba(14, 165, 233, 0.5);">
+          <i class="fa-solid fa-circle-check"></i> Found Property Notice
+        </span>
+      </div>
+      <h1 style="color: white; font-size: 2rem; margin-bottom: 0.4rem;">Report a Found Item</h1>
+      <p style="color: #bae6fd; font-size: 0.95rem;">Thank you for your honesty! Help return this item to its rightful owner.</p>
+    </div>
+
+    <!-- Security Guidance Alert -->
+    <div style="background: #eff6ff; border-left: 4px solid #3b82f6; padding: 1rem 1.5rem; margin: 1.5rem 2rem 0; border-radius: var(--radius-sm); font-size: 0.88rem; color: #1e3a8a;">
+      <i class="fa-solid fa-shield-halved" style="color: #2563eb; margin-right: 0.4rem;"></i>
+      <strong>Finder Tip:</strong> Keep at least one private detail secret (such as a serial number, exact lock-screen wallpaper, or unique item inside) so you can verify the claimant's proof!
+    </div>
+
+    <!-- Form -->
+    <div class="card-body" style="padding: 2.5rem;">
+      <form action="{{ url_for('report_found') }}" method="POST" enctype="multipart/form-data">
+        
+        <div class="form-group">
+          <label class="form-label">Item Title / Name <span class="required">*</span></label>
+          <input type="text" name="title" class="form-control" placeholder="e.g. Leather Bi-fold Brown Wallet with College ID" required autofocus>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="form-group">
+            <label class="form-label">Category <span class="required">*</span></label>
+            <select name="category" class="form-select" required>
+              <option value="" disabled selected>Select category...</option>
+              {% for cat in categories %}
+                <option value="{{ cat.id }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Brand / Distinct Marking</label>
+            <input type="text" name="brand" class="form-control" placeholder="e.g. Wildhorn, Fastrack, HP, Apple">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="form-group">
+            <label class="form-label">Primary Color</label>
+            <input type="text" name="color" class="form-control" placeholder="e.g. Brown, Silver, Blue">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Date Found <span class="required">*</span></label>
+            <input type="date" name="date_found" class="form-control" required value="{{ today }}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Found Location <span class="required">*</span></label>
+          <div class="input-icon-group">
+            <i class="fa-solid fa-location-dot"></i>
+            <input type="text" name="location" class="form-control" placeholder="e.g. Computer Science Lab 3, Row 2, Bench 5" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Current Custody / Where is the item kept right now? <span class="required">*</span></label>
+          <div class="input-icon-group">
+            <i class="fa-solid fa-vault"></i>
+            <input type="text" name="storage_location" class="form-control" placeholder="e.g. Deposited with Campus Main Security Office / With me at MCA Dept" required>
+          </div>
+          <div class="form-helper">Informs the owner where the physical handover can take place.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description <span class="required">*</span></label>
+          <textarea name="description" class="form-control" placeholder="Provide general description. (Avoid revealing confidential serial codes or lock codes so claimants must verify ownership)." required></textarea>
+        </div>
+
+        <!-- Image Upload with Live Preview -->
+        <div class="form-group">
+          <label class="form-label">Item Photo</label>
+          <div class="image-upload-wrapper" id="imageUploadWrapper" onclick="document.getElementById('image').click();">
+            <div class="upload-prompt">
+              <i class="fa-solid fa-camera" style="font-size: 2.2rem; color: var(--indigo-600); margin-bottom: 0.5rem;"></i>
+              <p style="font-weight: 600; color: var(--navy-900); margin-bottom: 0.25rem;">Click to upload clear photo of found item</p>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">PNG, JPG, JPEG up to 16MB</span>
+            </div>
+            <input type="file" name="image" id="image" accept="image/*" style="display: none;">
+            <img id="previewImage" class="image-upload-preview" alt="Preview">
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div style="margin-top: 2rem;">
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.95rem; font-size: 1.05rem;">
+            <i class="fa-solid fa-box-archive"></i> Submit Found Item Report
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}LOSTLINK - Smart Lost & Found Platform{% endblock %}</title>
+  <meta name="description" content="LOSTLINK - Smart Lost & Found Platform. Lost Something? Let's Find It. MCA Mini-Project powered by Flask and MongoDB Atlas.">
+  
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Announcement / Viva Notice Bar -->
+  <div style="background: #090e1a; color: #94a3b8; font-size: 0.78rem; padding: 0.4rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10b981;"></span>
+      <span><strong>LOSTLINK MCA Project</strong> &bull; Smart Lost & Found Platform with AI Matching</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 1rem;">
+      {% if db_status and db_status.is_atlas %}
+        <span class="db-status-pill atlas"><i class="fa-solid fa-cloud"></i> MongoDB Atlas Connected</span>
+      {% else %}
+        <span class="db-status-pill demo"><i class="fa-solid fa-database"></i> Embedded Mock DB (Viva Ready)</span>
+      {% endif %}
+      <span style="color: #64748b;">Tagline: <em>Lost Something? Let's Find It.</em></span>
+    </div>
+  </div>
+
+  <!-- Main Sticky Navigation Bar -->
+  <header class="site-navbar">
+    <div class="container nav-container">
+      <a href="{{ url_for('index') }}" class="brand-logo">
+        <div class="brand-icon-box">
+          <i class="fa-solid fa-magnifying-glass-location"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">LOST<span>LINK</span></span>
+          <span class="brand-tag">SMART RECOVERY</span>
+        </div>
+      </a>
+
+      <!-- Navigation Links -->
+      <ul class="nav-links">
+        <li><a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}"><i class="fa-solid fa-house"></i> Home</a></li>
+        <li><a href="{{ url_for('items') }}" class="nav-link {% if request.endpoint == 'items' %}active{% endif %}"><i class="fa-solid fa-compass"></i> Browse Items</a></li>
+        <li><a href="{{ url_for('report_lost') }}" class="nav-link {% if request.endpoint == 'report_lost' %}active{% endif %}"><i class="fa-solid fa-circle-exclamation text-danger"></i> Report Lost</a></li>
+        <li><a href="{{ url_for('report_found') }}" class="nav-link {% if request.endpoint == 'report_found' %}active{% endif %}"><i class="fa-solid fa-circle-check text-info"></i> Report Found</a></li>
+        
+        {% if session.get('user_id') %}
+          <li><a href="{{ url_for('dashboard') }}" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+          <li><a href="{{ url_for('my_reports') }}" class="nav-link {% if request.endpoint == 'my_reports' %}active{% endif %}"><i class="fa-solid fa-folder-open"></i> My Reports</a></li>
+          <li><a href="{{ url_for('claims') }}" class="nav-link {% if request.endpoint == 'claims' %}active{% endif %}"><i class="fa-solid fa-handshake"></i> Claims</a></li>
+          {% if session.get('user_role') == 'admin' %}
+            <li><a href="{{ url_for('admin') }}" class="nav-link {% if request.endpoint == 'admin' %}active{% endif %}" style="color: var(--orange-400);"><i class="fa-solid fa-shield-halved"></i> Admin</a></li>
+          {% endif %}
+        {% endif %}
+      </ul>
+
+      <!-- User CTA / Profile Group -->
+      <div class="nav-cta-group">
+        {% if session.get('user_id') %}
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <a href="{{ url_for('profile') }}" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
+              <img src="{{ session.get('user_avatar', 'https://api.dicebear.com/7.x/identicon/svg?seed=' + session.get('user_email', 'user')) }}" alt="Avatar" style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--indigo-500); background: white;">
+              <span style="color: white; font-weight: 600; font-size: 0.88rem; display: none; @media(min-width: 900px){ display: inline; }">{{ session.get('user_name', 'Account').split(' ')[0] }}</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light" title="Sign Out">
+              <i class="fa-solid fa-right-from-bracket"></i>
+            </a>
+          </div>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-light">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+          </a>
+          <a href="{{ url_for('register') }}" class="btn btn-sm btn-orange">
+            <i class="fa-solid fa-user-plus"></i> Register
+          </a>
+        {% endif %}
+        <button class="mobile-toggle" aria-label="Toggle Navigation">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash Messages Notifications -->
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+            {% if category == 'success' %}
+              <i class="fa-solid fa-circle-check text-success" style="font-size: 1.2rem; color: var(--status-recovered);"></i>
+            {% elif category == 'danger' or category == 'error' %}
+              <i class="fa-solid fa-circle-xmark text-danger" style="font-size: 1.2rem; color: var(--status-lost);"></i>
+            {% elif category == 'warning' %}
+              <i class="fa-solid fa-triangle-exclamation text-warning" style="font-size: 1.2rem; color: var(--status-pending);"></i>
+            {% else %}
+              <i class="fa-solid fa-circle-info text-info" style="font-size: 1.2rem; color: var(--indigo-600);"></i>
+            {% endif %}
+            <div style="font-size: 0.9rem; font-weight: 500;">{{ message }}</div>
+            <button class="alert-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Body Content -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Professional Platform Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-col">
+          <div class="brand-logo" style="margin-bottom: 1rem;">
+            <div class="brand-icon-box">
+              <i class="fa-solid fa-magnifying-glass-location"></i>
+            </div>
+            <div class="brand-text">
+              <span class="brand-name">LOST<span>LINK</span></span>
+              <span class="brand-tag">SMART RECOVERY PLATFORM</span>
+            </div>
+          </div>
+          <p style="font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.25rem;">
+            LOSTLINK is an intelligent Lost & Found ecosystem bridging campus communities. Leveraging algorithmic matching and verifiable proof workflows to reunite people with their precious belongings.
+          </p>
+          <div style="display: flex; gap: 0.75rem;">
+            <a href="#" class="btn btn-icon btn-sm btn-outline-light"><i class="fa-brands fa-github"></i></a>
+            <a href="#" class="btn btn-icon btn-sm btn-outline-light"><i class="fa-brands fa-linkedin-in"></i></a>
+            <a href="#" class="btn btn-icon btn-sm btn-outline-light"><i class="fa-solid fa-envelope"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Quick Navigation</h4>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('index') }}"><i class="fa-solid fa-angle-right"></i> Home Page</a></li>
+            <li><a href="{{ url_for('items') }}"><i class="fa-solid fa-angle-right"></i> Search Database</a></li>
+            <li><a href="{{ url_for('report_lost') }}"><i class="fa-solid fa-angle-right"></i> Report Lost Item</a></li>
+            <li><a href="{{ url_for('report_found') }}"><i class="fa-solid fa-angle-right"></i> Report Found Item</a></li>
+            <li><a href="{{ url_for('claims') }}"><i class="fa-solid fa-angle-right"></i> Claim Verification</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Categories</h4>
+          <ul class="footer-links">
+            <li><a href="{{ url_for('items', category='electronics') }}"><i class="fa-solid fa-angle-right"></i> Electronics & Laptops</a></li>
+            <li><a href="{{ url_for('items', category='wallets_bags') }}"><i class="fa-solid fa-angle-right"></i> Wallets & Backpacks</a></li>
+            <li><a href="{{ url_for('items', category='ids_cards') }}"><i class="fa-solid fa-angle-right"></i> ID Cards & Documents</a></li>
+            <li><a href="{{ url_for('items', category='keys') }}"><i class="fa-solid fa-angle-right"></i> Keys & Access Cards</a></li>
+            <li><a href="{{ url_for('items', category='mobile_phones') }}"><i class="fa-solid fa-angle-right"></i> Smartphones & Tablets</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Academic Project Details</h4>
+          <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: var(--radius-md); padding: 1rem; font-size: 0.82rem; line-height: 1.5;">
+            <p><strong>Course:</strong> Master of Computer Applications (MCA)</p>
+            <p><strong>Stack:</strong> Python Flask, PyMongo, MongoDB Atlas, HTML5, CSS3, JS</p>
+            <p><strong>Project Type:</strong> Mini-Project / Viva Demo</p>
+            <p style="margin-top: 0.5rem; color: var(--orange-400);"><strong>Tagline:</strong> Lost Something? Let's Find It.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div>
+          &copy; {{ current_year or 2026 }} <strong>LOSTLINK</strong>. All Rights Reserved. Designed for MCA Academic Demonstration.
+        </div>
+        <div style="display: flex; gap: 1.5rem;">
+          <a href="{{ url_for('items') }}" style="color: #94a3b8;">Browse Registry</a>
+          <a href="{{ url_for('login') }}" style="color: #94a3b8;">Staff Login</a>
+          <a href="{{ url_for('admin') }}" style="color: var(--orange-400);">Admin Portal</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

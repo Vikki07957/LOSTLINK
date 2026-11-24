@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+
+{% block title %}{{ item.title }} - LOSTLINK Details{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1rem;">
+
+  <!-- Breadcrumb & Back -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
+      <a href="{{ url_for('items') }}" style="color: var(--indigo-600);">&larr; Back to Items Registry</a>
+      <span>/</span>
+      <span>{{ item.category|title|replace('_', ' ') }}</span>
+      <span>/</span>
+      <span style="color: var(--navy-900); font-weight: 600;">{{ item.title }}</span>
+    </div>
+
+    <div style="display: flex; gap: 0.5rem;">
+      <a href="{{ url_for('printable_flyer', item_id=item.id) }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Generate printable A4 flyer">
+        <i class="fa-solid fa-print"></i> Print Notice Flyer
+      </a>
+      <button onclick="copyItemLink()" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-share-nodes"></i> Share
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Item Card Layout -->
+  <div style="display: grid; grid-template-columns: 1fr 1.25fr; gap: 2rem; margin-bottom: 3rem;">
+    
+    <!-- Left Column: Item Image & Status Banner -->
+    <div>
+      <div class="card" style="overflow: hidden; border-radius: var(--radius-xl);">
+        <div style="position: relative; width: 100%; height: 380px; background: var(--navy-900); display: flex; align-items: center; justify-content: center;">
+          {% if item.image_url %}
+            <img src="{{ item.image_url }}" alt="{{ item.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+          {% else %}
+            <div style="text-align: center; color: #94a3b8;">
+              <i class="fa-solid fa-image" style="font-size: 4rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+              <p>No direct photograph uploaded</p>
+            </div>
+          {% endif %}
+
+          <div style="position: absolute; top: 16px; left: 16px;">
+            {% if item.type == 'lost' %}
+              <span class="badge badge-lost" style="font-size: 0.85rem; padding: 0.4rem 0.9rem;">
+                <i class="fa-solid fa-circle-exclamation"></i> Lost Item
+              </span>
+            {% else %}
+              <span class="badge badge-found" style="font-size: 0.85rem; padding: 0.4rem 0.9rem;">
+                <i class="fa-solid fa-circle-check"></i> Found Item
+              </span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="card-body" style="background: var(--bg-subtle);">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.85rem; color: var(--text-muted);">Current Registry Status:</span>
+            {% if item.status == 'Recovered' or item.status == 'Returned to Owner' %}
+              <span class="badge badge-recovered"><i class="fa-solid fa-handshake-angle"></i> Successfully Reunited</span>
+            {% elif item.status == 'Claim Pending' or item.status == 'Under Claim' %}
+              <span class="badge badge-pending"><i class="fa-solid fa-clock"></i> Verification In Progress</span>
+            {% else %}
+              <span class="badge" style="background: #e2e8f0; color: #334155;"><i class="fa-solid fa-circle-dot"></i> Active Report</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Reporter Card -->
+      <div class="card" style="margin-top: 1.5rem; padding: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ item.reporter_email or 'reporter' }}" alt="Reporter Avatar" style="width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--indigo-500);">
+          <div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700;">Reported By</div>
+            <div style="font-weight: 700; color: var(--navy-900);">{{ item.reporter_name or 'Community Member' }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Reported on {{ item.created_at or 'Recently' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Specifications & Claim Action -->
+    <div>
+      <div class="card" style="padding: 2rem; border-radius: var(--radius-xl);">
+        
+        <span class="badge badge-category" style="margin-bottom: 0.75rem;">
+          {{ item.category|title|replace('_', ' ') }}
+        </span>
+
+        <h1 style="font-size: 2.2rem; margin-bottom: 1rem; color: var(--navy-900);">{{ item.title }}</h1>
+
+        <!-- Primary Action Callout -->
+        <div style="background: var(--indigo-50); border: 1px solid var(--indigo-100); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.75rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            {% if item.type == 'found' %}
+              <div style="font-weight: 700; color: var(--indigo-900);">Is this item yours?</div>
+              <div style="font-size: 0.85rem; color: var(--indigo-700);">Submit verifiable ownership proof to initiate reclaim.</div>
+            {% else %}
+              <div style="font-weight: 700; color: var(--indigo-900);">Did you find this item?</div>
+              <div style="font-size: 0.85rem; color: var(--indigo-700);">Help connect with the owner to arrange a return.</div>
+            {% endif %}
+          </div>
+
+          <div>
+            {% if item.status not in ['Recovered', 'Returned to Owner'] %}
+              {% if item.type == 'found' %}
+                <button onclick="openModal('claimModal')" class="btn btn-orange">
+                  <i class="fa-solid fa-hand-holding-hand"></i> Claim This Item
+                </button>
+              {% else %}
+                <button onclick="openModal('claimModal')" class="btn btn-primary">
+                  <i class="fa-solid fa-circle-check"></i> I Found This Item!
+                </button>
+              {% endif %}
+            {% else %}
+              <button class="btn btn-outline-secondary" disabled>
+                <i class="fa-solid fa-check-double"></i> Item Reunited
+              </button>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div style="margin-bottom: 2rem;">
+          <h3 style="font-size: 1.15rem; margin-bottom: 0.6rem;">Description</h3>
+          <p style="color: var(--navy-700); font-size: 1rem; line-height: 1.7; white-space: pre-line;">{{ item.description }}</p>
+        </div>
+
+        <!-- Specifications Grid -->
+        <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          
+          <div>
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Location</div>
+            <div style="font-weight: 600; color: var(--navy-900); font-size: 0.95rem; margin-top: 0.2rem;">
+              <i class="fa-solid fa-location-dot" style="color: var(--indigo-600); margin-right: 0.3rem;"></i>
+              {{ item.location }}
+            </div>
+          </div>
+
+          <div>
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Date</div>
+            <div style="font-weight: 600; color: var(--navy-900); font-size: 0.95rem; margin-top: 0.2rem;">
+              <i class="fa-regular fa-calendar" style="color: var(--orange-500); margin-right: 0.3rem;"></i>
+              {{ item.date_lost or item.date_found or item.date }}
+            </div>
+          </div>
+
+          {% if item.brand %}
+            <div>
+              <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Brand</div>
+              <div style="font-weight: 600; color: var(--navy-900); font-size: 0.95rem; margin-top: 0.2rem;">{{ item.brand }}</div>
+            </div>
+          {% endif %}
+
+          {% if item.color %}
+            <div>
+              <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Primary Color</div>
+              <div style="font-weight: 600; color: var(--navy-900); font-size: 0.95rem; margin-top: 0.2rem;">{{ item.color }}</div>
+            </div>
+          {% endif %}
+
+          {% if item.storage_location %}
+            <div style="grid-column: 1 / -1; background: var(--bg-page); padding: 0.85rem; border-radius: var(--radius-md); border: 1px dashed var(--border-color);">
+              <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Physical Custody / Handover Location</div>
+              <div style="font-weight: 600; color: var(--navy-900); margin-top: 0.2rem;">
+                <i class="fa-solid fa-building-shield" style="color: var(--indigo-600); margin-right: 0.3rem;"></i>
+                {{ item.storage_location }}
+              </div>
+            </div>
+          {% endif %}
+
+          {% if item.reward %}
+            <div style="grid-column: 1 / -1;">
+              <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                <i class="fa-solid fa-gift"></i> Finder Cash Reward: ₹{{ item.reward }}
+              </span>
+            </div>
+          {% endif %}
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Smart AI Matches Section -->
+  <div class="card" style="margin-bottom: 3rem; border-radius: var(--radius-xl); overflow: hidden; border-color: var(--indigo-400);">
+    <div class="card-header" style="background: linear-gradient(135deg, var(--navy-900), #1e1b4b); color: white;">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--indigo-500), var(--orange-500)); display: flex; align-items: center; justify-content: center; font-size: 1rem;">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </div>
+        <div>
+          <h3 style="color: white; margin-bottom: 0; font-size: 1.2rem;">Smart Match Suggestions</h3>
+          <span style="font-size: 0.8rem; color: #cbd5e1;">Top potential counterpart matches computed by LOSTLINK's matching algorithm</span>
+        </div>
+      </div>
+      <span class="badge badge-category">{{ matches|length }} Results Found</span>
+    </div>
+
+    <div class="card-body">
+      {% if matches %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
+          {% for match in matches %}
+            <div class="card" style="border: 1px solid #c7d2fe; display: flex; flex-direction: column;">
+              <div style="padding: 1.25rem; display: flex; gap: 1rem; align-items: flex-start;">
+                
+                <div class="match-score-circle" style="width: 52px; height: 52px;">
+                  <div class="match-score-num" style="font-size: 1rem;">{{ match.match_score }}%</div>
+                  <div class="match-score-lbl">Score</div>
+                </div>
+
+                <div style="flex: 1; overflow: hidden;">
+                  <h4 style="font-size: 1rem; margin-bottom: 0.25rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ match.title }}</h4>
+                  <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem;">
+                    <i class="fa-solid fa-location-dot"></i> {{ match.location }}
+                  </div>
+                  <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+                    {% for r in match.match_reasons[:2] %}
+                      <span style="font-size: 0.7rem; background: var(--indigo-50); color: var(--indigo-700); padding: 0.15rem 0.4rem; border-radius: var(--radius-sm);">{{ r }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+
+              </div>
+
+              <div style="margin-top: auto; padding: 0.75rem 1.25rem; background: var(--bg-subtle); border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end;">
+                <a href="{{ url_for('item_detail', item_id=match.id) }}" class="btn btn-sm btn-outline-primary">
+                  Inspect Counterpart &rarr;
+                </a>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+          <i class="fa-solid fa-network-wired" style="font-size: 2.5rem; color: #cbd5e1; margin-bottom: 0.75rem;"></i>
+          <h4>No immediate counterparts detected yet</h4>
+          <p style="font-size: 0.9rem;">As users submit reports, LOSTLINK continuously runs matching scans in the background.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Public Inquiry & Community Messages Thread -->
+  <div class="card" style="border-radius: var(--radius-xl);">
+    <div class="card-header">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <i class="fa-solid fa-comments" style="color: var(--indigo-600);"></i>
+        <h3 style="margin-bottom: 0; font-size: 1.15rem;">Public Q&A & Inquiries ({{ item.inquiries|length if item.inquiries else 0 }})</h3>
+      </div>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">Ask questions about recovery without disclosing private serial numbers</span>
+    </div>
+
+    <div class="card-body">
+      <!-- Existing Comments -->
+      <div style="display: flex; flex-direction: column; gap: 1.25rem; margin-bottom: 2rem;">
+        {% if item.inquiries %}
+          {% for inq in item.inquiries %}
+            <div style="display: flex; gap: 0.85rem; align-items: flex-start; padding: 1rem; background: var(--bg-page); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+              <img src="https://api.dicebear.com/7.x/identicon/svg?seed={{ inq.author_name }}" alt="{{ inq.author_name }}" style="width: 36px; height: 36px; border-radius: 50%; background: white;">
+              <div style="flex: 1;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                  <strong style="color: var(--navy-900); font-size: 0.9rem;">{{ inq.author_name }}</strong>
+                  <span style="font-size: 0.75rem; color: var(--text-light);">{{ inq.timestamp }}</span>
+                </div>
+                <p style="font-size: 0.9rem; color: var(--navy-800); margin: 0;">{{ inq.message }}</p>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div style="text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.9rem;">
+            No questions asked yet. Post an inquiry below if you have any questions!
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Submit Comment Form -->
+      <form action="{{ url_for('post_inquiry', item_id=item.id) }}" method="POST">
+        <div class="form-group">
+          <label class="form-label" style="font-size: 0.85rem;">Post a Public Question / Message</label>
+          <textarea name="message" class="form-control" placeholder="Ask general questions like 'Was this found near the stairs?' or 'Does it have a blue sticker?'" style="min-height: 80px;" required></textarea>
+        </div>
+        <div style="display: flex; justify-content: flex-end;">
+          <button type="submit" class="btn btn-sm btn-primary">
+            <i class="fa-solid fa-paper-plane"></i> Send Message
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<!-- Claim / Reclaim Modal -->
+<div class="modal-backdrop" id="claimModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 style="font-size: 1.25rem; margin-bottom: 0;">
+        <i class="fa-solid fa-shield-check" style="color: var(--orange-500); margin-right: 0.4rem;"></i>
+        Submit Claim Request
+      </h3>
+      <button class="alert-close" onclick="closeModal('claimModal')"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <form action="{{ url_for('submit_claim', item_id=item.id) }}" method="POST" enctype="multipart/form-data">
+      <div class="modal-body">
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          To prevent false claims, please provide verifiable ownership evidence regarding <strong>"{{ item.title }}"</strong>.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label">Proof of Ownership / Secret Identifiers <span class="required">*</span></label>
+          <textarea name="proof_description" class="form-control" placeholder="Describe confidential details: e.g. serial numbers, specific wallpaper, exact contents of wallet, passwords or receipts, marks not visible in the public photo." rows="4" required></textarea>
+          <div class="form-helper">This information is only visible to the finder and system administrator.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Supporting Proof Document / Photo (Optional)</label>
+          <input type="file" name="proof_file" class="form-control" accept="image/*,.pdf">
+          <div class="form-helper">Purchase bill, ID card, or older photo of you with the item.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Your Contact Phone Number <span class="required">*</span></label>
+          <input type="tel" name="contact_phone" class="form-control" placeholder="e.g. 9876543210" value="{{ session.get('user_phone', '') }}" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Preferred Handover Location</label>
+          <input type="text" name="preferred_location" class="form-control" placeholder="e.g. Campus Security Desk, Cafeteria, Department Office">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" onclick="closeModal('claimModal')">Cancel</button>
+        <button type="submit" class="btn btn-orange">
+          <i class="fa-solid fa-paper-plane"></i> Submit Claim for Review
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

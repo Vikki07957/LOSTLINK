@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}My Reports - LOSTLINK{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1rem;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h1 style="font-size: 2rem; margin-bottom: 0.25rem;">My Item Reports</h1>
+      <p style="color: var(--text-muted);">Manage all items you have reported as lost or found.</p>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('report_lost') }}" class="btn btn-sm btn-orange">
+        <i class="fa-solid fa-plus"></i> Report Lost Item
+      </a>
+      <a href="{{ url_for('report_found') }}" class="btn btn-sm btn-primary">
+        <i class="fa-solid fa-plus"></i> Report Found Item
+      </a>
+    </div>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs-header">
+    <button class="tab-btn active" onclick="switchReportTab('lostTab', this)">
+      <i class="fa-solid fa-circle-exclamation text-danger"></i>
+      My Lost Items ({{ lost_items|length }})
+    </button>
+    <button class="tab-btn" onclick="switchReportTab('foundTab', this)">
+      <i class="fa-solid fa-circle-check text-info"></i>
+      My Found Items ({{ found_items|length }})
+    </button>
+  </div>
+
+  <!-- Tab 1: Lost Items -->
+  <div id="lostTab" class="report-tab-pane">
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Date Lost</th>
+              <th>Location</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in lost_items %}
+              <tr>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    {% if item.image_url %}
+                      <img src="{{ item.image_url }}" alt="{{ item.title }}" style="width: 44px; height: 44px; border-radius: var(--radius-sm); object-fit: cover;">
+                    {% else %}
+                      <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: var(--text-light);">
+                        <i class="fa-solid fa-box"></i>
+                      </div>
+                    {% endif %}
+                    <div>
+                      <strong>{{ item.title }}</strong>
+                      {% if item.brand %}<div style="font-size: 0.75rem; color: var(--text-muted);">{{ item.brand }}</div>{% endif %}
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-category">{{ item.category|title|replace('_', ' ') }}</span></td>
+                <td>{{ item.date_lost or item.date }}</td>
+                <td><i class="fa-solid fa-location-dot" style="color: var(--indigo-500);"></i> {{ item.location }}</td>
+                <td>
+                  {% if item.status == 'Recovered' %}
+                    <span class="badge badge-recovered">Recovered</span>
+                  {% elif item.status == 'Under Claim' %}
+                    <span class="badge badge-pending">Under Claim</span>
+                  {% else %}
+                    <span class="badge badge-lost">Lost</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-sm btn-outline-primary" title="View details & matches">
+                      <i class="fa-solid fa-eye"></i>
+                    </a>
+                    {% if item.status != 'Recovered' %}
+                      <form action="{{ url_for('mark_recovered', item_id=item.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Did you recover this item? It will be marked as solved.');">
+                        <button type="submit" class="btn btn-sm btn-primary" title="Mark as Recovered">
+                          <i class="fa-solid fa-check"></i> Found!
+                        </button>
+                      </form>
+                    {% endif %}
+                    <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                      <i class="fa-solid fa-pen"></i>
+                    </a>
+                    <form action="{{ url_for('delete_item', item_id=item.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this report?');">
+                      <button type="submit" class="btn btn-sm btn-outline-secondary text-danger" title="Delete">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                  You have not reported any lost items yet.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Found Items -->
+  <div id="foundTab" class="report-tab-pane" style="display: none;">
+    <div class="card">
+      <div class="table-responsive">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Category</th>
+              <th>Date Found</th>
+              <th>Storage / Handover Custody</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in found_items %}
+              <tr>
+                <td>
+                  <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    {% if item.image_url %}
+                      <img src="{{ item.image_url }}" alt="{{ item.title }}" style="width: 44px; height: 44px; border-radius: var(--radius-sm); object-fit: cover;">
+                    {% else %}
+                      <div style="width: 44px; height: 44px; border-radius: var(--radius-sm); background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: var(--text-light);">
+                        <i class="fa-solid fa-box"></i>
+                      </div>
+                    {% endif %}
+                    <div>
+                      <strong>{{ item.title }}</strong>
+                      <div style="font-size: 0.75rem; color: var(--text-muted);">Found at {{ item.location }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge badge-category">{{ item.category|title|replace('_', ' ') }}</span></td>
+                <td>{{ item.date_found or item.date }}</td>
+                <td><i class="fa-solid fa-vault" style="color: var(--indigo-500);"></i> {{ item.storage_location or item.location }}</td>
+                <td>
+                  {% if item.status == 'Returned to Owner' %}
+                    <span class="badge badge-recovered">Returned</span>
+                  {% elif item.status == 'Claim Pending' %}
+                    <span class="badge badge-pending">Claim Pending</span>
+                  {% else %}
+                    <span class="badge badge-found">Available</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div style="display: flex; gap: 0.4rem;">
+                    <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-sm btn-outline-primary" title="View details">
+                      <i class="fa-solid fa-eye"></i>
+                    </a>
+                    {% if item.status != 'Returned to Owner' %}
+                      <form action="{{ url_for('mark_recovered', item_id=item.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Confirm returning this item to its verified owner?');">
+                        <button type="submit" class="btn btn-sm btn-primary" title="Mark as Returned">
+                          <i class="fa-solid fa-handshake"></i> Returned
+                        </button>
+                      </form>
+                    {% endif %}
+                    <a href="{{ url_for('edit_item', item_id=item.id) }}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                      <i class="fa-solid fa-pen"></i>
+                    </a>
+                    <form action="{{ url_for('delete_item', item_id=item.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this report?');">
+                      <button type="submit" class="btn btn-sm btn-outline-secondary text-danger" title="Delete">
+                        <i class="fa-solid fa-trash-can"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
+                  You have not reported any found items yet.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function switchReportTab(tabId, btn) {
+    document.querySelectorAll('.report-tab-pane').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(tabId).style.display = 'block';
+    btn.classList.add('active');
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}User Dashboard - LOSTLINK{% endblock %}
+
+{% block content %}
+<div class="dashboard-wrapper">
+  
+  <!-- Dashboard Sidebar -->
+  <aside class="dashboard-sidebar">
+    <div class="sidebar-user">
+      <img src="{{ user.avatar or 'https://api.dicebear.com/7.x/identicon/svg?seed=' + user.email }}" alt="{{ user.name }}" class="user-avatar-img">
+      <div class="user-info-text">
+        <div class="user-name">{{ user.name }}</div>
+        <div class="user-role-badge">
+          {% if user.role == 'admin' %}
+            <i class="fa-solid fa-shield-halved" style="color: var(--orange-500);"></i> Admin
+          {% else %}
+            <i class="fa-solid fa-user-check"></i> Verified Member
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <ul class="sidebar-menu">
+      <li class="sidebar-heading">Navigation</li>
+      <li class="sidebar-item active">
+        <a href="{{ url_for('dashboard') }}"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+      </li>
+      <li class="sidebar-item">
+        <a href="{{ url_for('my_reports') }}"><i class="fa-solid fa-folder-open"></i> My Reports</a>
+      </li>
+      <li class="sidebar-item">
+        <a href="{{ url_for('claims') }}"><i class="fa-solid fa-handshake"></i> Claim Requests</a>
+      </li>
+      <li class="sidebar-item">
+        <a href="{{ url_for('profile') }}"><i class="fa-solid fa-user-gear"></i> Profile & Settings</a>
+      </li>
+
+      <li class="sidebar-heading">Quick Actions</li>
+      <li class="sidebar-item">
+        <a href="{{ url_for('report_lost') }}" style="color: var(--status-lost);"><i class="fa-solid fa-circle-exclamation"></i> Report Lost</a>
+      </li>
+      <li class="sidebar-item">
+        <a href="{{ url_for('report_found') }}" style="color: var(--status-found);"><i class="fa-solid fa-circle-check"></i> Report Found</a>
+      </li>
+      <li class="sidebar-item">
+        <a href="{{ url_for('items') }}"><i class="fa-solid fa-magnifying-glass"></i> Search Items</a>
+      </li>
+
+      {% if user.role == 'admin' %}
+        <li class="sidebar-heading">Administration</li>
+        <li class="sidebar-item">
+          <a href="{{ url_for('admin') }}" style="color: var(--orange-500);"><i class="fa-solid fa-shield-halved"></i> Admin Portal</a>
+        </li>
+      {% endif %}
+
+      <li class="sidebar-heading" style="margin-top: auto;">Account</li>
+      <li class="sidebar-item">
+        <a href="{{ url_for('logout') }}"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Main Content Area -->
+  <section class="dashboard-main">
+    
+    <!-- Welcome Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">Hello, {{ user.name.split(' ')[0] }}! 👋</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Here is your personal item tracking overview and smart alerts.</p>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem;">
+        <a href="{{ url_for('report_lost') }}" class="btn btn-sm btn-orange">
+          <i class="fa-solid fa-plus"></i> Report Lost Item
+        </a>
+        <a href="{{ url_for('report_found') }}" class="btn btn-sm btn-primary">
+          <i class="fa-solid fa-plus"></i> Report Found Item
+        </a>
+      </div>
+    </div>
+
+    <!-- Personal Metrics Grid -->
+    <div class="stats-grid">
+      <div class="stat-card stat-orange">
+        <div class="stat-info">
+          <div class="stat-label">My Lost Items</div>
+          <div class="stat-value">{{ user_stats.my_lost_count }}</div>
+        </div>
+        <div class="stat-icon">
+          <i class="fa-solid fa-circle-exclamation"></i>
+        </div>
+      </div>
+
+      <div class="stat-card stat-blue">
+        <div class="stat-info">
+          <div class="stat-label">My Found Items</div>
+          <div class="stat-value">{{ user_stats.my_found_count }}</div>
+        </div>
+        <div class="stat-icon">
+          <i class="fa-solid fa-box-open"></i>
+        </div>
+      </div>
+
+      <div class="stat-card stat-amber">
+        <div class="stat-info">
+          <div class="stat-label">Claims Received</div>
+          <div class="stat-value">{{ user_stats.claims_received_count }}</div>
+        </div>
+        <div class="stat-icon">
+          <i class="fa-solid fa-inbox"></i>
+        </div>
+      </div>
+
+      <div class="stat-card stat-emerald">
+        <div class="stat-info">
+          <div class="stat-label">Recovered & Returned</div>
+          <div class="stat-value">{{ user_stats.my_recovered_count }}</div>
+        </div>
+        <div class="stat-icon">
+          <i class="fa-solid fa-handshake-angle"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Smart AI Match Alerts Banner -->
+    <div class="card" style="margin-bottom: 2rem; border-color: var(--indigo-400); box-shadow: var(--shadow-md);">
+      <div class="card-header" style="background: linear-gradient(135deg, var(--indigo-50), #ffffff);">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--indigo-600); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div>
+            <h3 style="font-size: 1.15rem; margin-bottom: 0;">Smart Match Alerts</h3>
+            <span style="font-size: 0.78rem; color: var(--text-muted);">Algorithmic pairings between your reported items and community posts</span>
+          </div>
+        </div>
+        <span class="badge badge-category">{{ smart_alerts|length }} Potential Matches</span>
+      </div>
+
+      <div class="card-body">
+        {% if smart_alerts %}
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for alert in smart_alerts %}
+              <div class="match-card">
+                <div class="match-score-circle">
+                  <div class="match-score-num">{{ alert.score }}%</div>
+                  <div class="match-score-lbl">Match</div>
+                </div>
+
+                <div style="flex: 1;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                    <span class="badge badge-found">Found Lead</span>
+                    <h4 style="margin: 0; font-size: 1.05rem;">{{ alert.matched_item.title }}</h4>
+                  </div>
+                  <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                    Matches your lost report: <strong>"{{ alert.my_item.title }}"</strong>
+                  </p>
+                  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    {% for r in alert.reasons %}
+                      <span style="font-size: 0.75rem; background: white; border: 1px solid var(--border-color); padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); color: var(--navy-700);">
+                        <i class="fa-solid fa-check" style="color: var(--status-recovered); font-size: 0.7rem;"></i> {{ r }}
+                      </span>
+                    {% endfor %}
+                  </div>
+                </div>
+
+                <div>
+                  <a href="{{ url_for('item_detail', item_id=alert.matched_item.id) }}" class="btn btn-sm btn-primary">
+                    Inspect Match &rarr;
+                  </a>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2rem 1rem; color: var(--text-muted);">
+            <i class="fa-solid fa-radar" style="font-size: 2.2rem; color: var(--indigo-400); margin-bottom: 0.75rem;"></i>
+            <p style="font-size: 0.95rem; margin-bottom: 0.5rem;"><strong>No direct match alerts right now</strong></p>
+            <p style="font-size: 0.85rem;">When an item resembling your reports is posted, our matching engine will alert you here automatically.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Two Column Layout: Recent Reports & Activity Feed -->
+    <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.5rem;">
+      
+      <!-- My Active Reports Summary -->
+      <div class="card">
+        <div class="card-header">
+          <h3>My Active Reports</h3>
+          <a href="{{ url_for('my_reports') }}" style="font-size: 0.85rem; font-weight: 600;">View All ({{ user_stats.my_lost_count + user_stats.my_found_count }}) &rarr;</a>
+        </div>
+        <div class="card-body" style="padding: 0;">
+          {% if recent_user_items %}
+            <div class="table-responsive">
+              <table class="table-custom">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for item in recent_user_items %}
+                    <tr>
+                      <td>
+                        <strong>{{ item.title }}</strong>
+                        <div style="font-size: 0.78rem; color: var(--text-muted);"><i class="fa-solid fa-location-dot"></i> {{ item.location }}</div>
+                      </td>
+                      <td>
+                        {% if item.type == 'lost' %}
+                          <span class="badge badge-lost">Lost</span>
+                        {% else %}
+                          <span class="badge badge-found">Found</span>
+                        {% endif %}
+                      </td>
+                      <td style="font-size: 0.85rem;">{{ item.date_lost or item.date_found or item.date }}</td>
+                      <td>
+                        {% if item.status == 'Recovered' or item.status == 'Returned to Owner' %}
+                          <span class="badge badge-recovered">Recovered</span>
+                        {% elif item.status == 'Claim Pending' %}
+                          <span class="badge badge-pending">Pending</span>
+                        {% else %}
+                          <span class="badge" style="background: #f1f5f9; color: #475569;">Active</span>
+                        {% endif %}
+                      </td>
+                      <td>
+                        <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-sm btn-outline-secondary">
+                          View
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div style="text-align: center; padding: 2.5rem 1rem; color: var(--text-muted);">
+              <p>You haven't posted any reports yet.</p>
+              <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center;">
+                <a href="{{ url_for('report_lost') }}" class="btn btn-sm btn-orange">Report Lost</a>
+                <a href="{{ url_for('report_found') }}" class="btn btn-sm btn-primary">Report Found</a>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Campus Activity Timeline -->
+      <div class="card">
+        <div class="card-header">
+          <h3>Campus Activity Feed</h3>
+        </div>
+        <div class="card-body">
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for act in recent_activities %}
+              <div style="display: flex; gap: 0.75rem; font-size: 0.88rem; align-items: flex-start;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--indigo-50); color: var(--indigo-600); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.75rem;">
+                  <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div>
+                  <div><strong>{{ act.user_name }}</strong>: {{ act.description }}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-light);">{{ act.timestamp }}</div>
+                </div>
+              </div>
+            {% else %}
+              <p style="color: var(--text-muted); font-size: 0.85rem;">No recent platform activity.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+</div>
+{% endblock %}

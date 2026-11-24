@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Report Lost Item - LOSTLINK{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 1rem; max-width: 800px;">
+  <div class="card" style="border-radius: var(--radius-xl); box-shadow: var(--shadow-xl); overflow: hidden;">
+    
+    <!-- Header -->
+    <div style="background: linear-gradient(135deg, #7f1d1d, #991b1b, #0f172a); color: white; padding: 2.25rem 2rem;">
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+        <span class="badge" style="background: rgba(239, 68, 68, 0.25); color: #fecaca; border: 1px solid rgba(239, 68, 68, 0.5);">
+          <i class="fa-solid fa-circle-exclamation"></i> Lost Property Notice
+        </span>
+      </div>
+      <h1 style="color: white; font-size: 2rem; margin-bottom: 0.4rem;">Report a Lost Item</h1>
+      <p style="color: #fca5a5; font-size: 0.95rem;">Provide accurate details to trigger our smart matching engine and notify finders across campus.</p>
+    </div>
+
+    <!-- Form -->
+    <div class="card-body" style="padding: 2.5rem;">
+      <form action="{{ url_for('report_lost') }}" method="POST" enctype="multipart/form-data">
+        
+        <div class="form-group">
+          <label class="form-label">Item Title / Name <span class="required">*</span></label>
+          <input type="text" name="title" class="form-control" placeholder="e.g. Dell XPS 15 Laptop with Blue Skin" required autofocus>
+          <div class="form-helper">Be concise and specific (brand, item type, standout visual).</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="form-group">
+            <label class="form-label">Category <span class="required">*</span></label>
+            <select name="category" class="form-select" required>
+              <option value="" disabled selected>Select category...</option>
+              {% for cat in categories %}
+                <option value="{{ cat.id }}">{{ cat.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Brand / Manufacturer</label>
+            <input type="text" name="brand" class="form-control" placeholder="e.g. Dell, Apple, Fossil, Titan, Nike">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="form-group">
+            <label class="form-label">Primary Color</label>
+            <input type="text" name="color" class="form-control" placeholder="e.g. Matte Black, Navy Blue, Silver">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Date Lost <span class="required">*</span></label>
+            <input type="date" name="date_lost" class="form-control" required value="{{ today }}">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Lost Location / Campus Landmark <span class="required">*</span></label>
+          <div class="input-icon-group">
+            <i class="fa-solid fa-location-dot"></i>
+            <input type="text" name="location" class="form-control" placeholder="e.g. Central Library 2nd Floor Study Room, Cafeteria Table #4" required>
+          </div>
+          <div class="form-helper">Mention building, room number, or specific area.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Detailed Description & Unique Marks <span class="required">*</span></label>
+          <textarea name="description" class="form-control" placeholder="Describe special characteristics, stickers, wallpapers, keychain, scratches, contents inside, etc." required></textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+          <div class="form-group">
+            <label class="form-label">Optional Cash Reward (₹)</label>
+            <div class="input-icon-group">
+              <i class="fa-solid fa-indian-rupee-sign"></i>
+              <input type="number" name="reward" class="form-control" placeholder="e.g. 500 (Optional)">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Preferred Contact Method</label>
+            <select name="contact_method" class="form-select">
+              <option value="In-App Messaging & Claims">In-App Claims (Recommended for Privacy)</option>
+              <option value="Phone Number">Phone Number</option>
+              <option value="Email">Email</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Image Upload with Live Preview -->
+        <div class="form-group">
+          <label class="form-label">Item Photo / Reference Image</label>
+          <div class="image-upload-wrapper" id="imageUploadWrapper" onclick="document.getElementById('image').click();">
+            <div class="upload-prompt">
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.2rem; color: var(--indigo-600); margin-bottom: 0.5rem;"></i>
+              <p style="font-weight: 600; color: var(--navy-900); margin-bottom: 0.25rem;">Click to upload reference photo</p>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">PNG, JPG, JPEG, WEBP up to 16MB</span>
+            </div>
+            <input type="file" name="image" id="image" accept="image/*" style="display: none;">
+            <img id="previewImage" class="image-upload-preview" alt="Preview">
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div style="margin-top: 2rem;">
+          <button type="submit" class="btn btn-orange" style="width: 100%; padding: 0.95rem; font-size: 1.05rem;">
+            <i class="fa-solid fa-paper-plane"></i> Publish Lost Item Report & Run Matcher
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

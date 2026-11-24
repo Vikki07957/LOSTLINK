@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Page Not Found - LOSTLINK{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 6rem 1rem; text-align: center;">
+  <div style="max-width: 500px; margin: 0 auto;">
+    <div style="font-size: 6rem; font-weight: 900; color: var(--indigo-600); line-height: 1; margin-bottom: 1rem;">
+      404
+    </div>
+    <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">Looks Like This Page Got Lost</h2>
+    <p style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2rem;">
+      Don't worry, even on LOSTLINK some links go missing. Let's get you back on track!
+    </p>
+    <div style="display: flex; justify-content: center; gap: 1rem;">
+      <a href="{{ url_for('index') }}" class="btn btn-primary">Return Home</a>
+      <a href="{{ url_for('items') }}" class="btn btn-outline-secondary">Search Items</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

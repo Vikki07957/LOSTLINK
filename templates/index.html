@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}LOSTLINK - Smart Lost & Found Platform | Lost Something? Let's Find It.{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section style="background: radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.18), transparent 50%), radial-gradient(circle at 10% 80%, rgba(249, 115, 22, 0.12), transparent 45%), linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%); color: white; padding: 5rem 0 4rem; position: relative; overflow: hidden;">
+  <div class="container" style="position: relative; z-index: 2;">
+    <div style="max-width: 820px; margin: 0 auto; text-align: center;">
+      
+      <!-- Pill Badge -->
+      <div style="display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); padding: 0.35rem 1rem; border-radius: var(--radius-full); margin-bottom: 1.5rem; font-size: 0.85rem; font-weight: 600; color: #e0e7ff;">
+        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--orange-400);"></span>
+        Next-Generation Campus & Community Item Recovery
+      </div>
+
+      <!-- Main Headline -->
+      <h1 style="color: #ffffff; font-size: 3.25rem; font-weight: 800; line-height: 1.15; margin-bottom: 1.25rem; letter-spacing: -0.03em;">
+        Lost Something? <br>
+        <span style="background: linear-gradient(135deg, #818cf8 0%, #fb923c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Let's Find It Together.</span>
+      </h1>
+
+      <p style="font-size: 1.2rem; color: #cbd5e1; margin-bottom: 2.25rem; max-width: 680px; margin-left: auto; margin-right: auto;">
+        LOSTLINK is an MCA smart platform connecting people who lost personal belongings with honest finders. Powered by intelligent multi-criteria matching and secure ownership verification.
+      </p>
+
+      <!-- Instant Search Bar -->
+      <div style="background: white; border-radius: var(--radius-xl); padding: 0.5rem; box-shadow: 0 20px 40px rgba(0,0,0,0.3); max-width: 720px; margin: 0 auto 2.5rem; display: flex; align-items: center; gap: 0.5rem; border: 2px solid rgba(99, 102, 241, 0.3);">
+        <div style="padding-left: 1rem; color: var(--indigo-600); font-size: 1.2rem;">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <form action="{{ url_for('items') }}" method="GET" style="display: flex; flex: 1; gap: 0.5rem; align-items: center;">
+          <input type="text" name="q" placeholder="Search by item name, brand, color, or location..." style="border: none; outline: none; width: 100%; font-size: 1rem; color: var(--navy-900); padding: 0.5rem;">
+          <select name="type" style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.55rem 0.75rem; font-size: 0.88rem; outline: none; color: var(--navy-800); background: #f8fafc;">
+            <option value="all">All Types</option>
+            <option value="lost">Lost Items</option>
+            <option value="found">Found Items</option>
+          </select>
+          <button type="submit" class="btn btn-primary" style="white-space: nowrap;">
+            Search
+          </button>
+        </form>
+      </div>
+
+      <!-- Quick Action CTAs -->
+      <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <a href="{{ url_for('report_lost') }}" class="btn btn-lg btn-orange">
+          <i class="fa-solid fa-circle-exclamation"></i> Report a Lost Item
+        </a>
+        <a href="{{ url_for('report_found') }}" class="btn btn-lg btn-primary">
+          <i class="fa-solid fa-circle-check"></i> Report a Found Item
+        </a>
+        <a href="{{ url_for('items') }}" class="btn btn-lg btn-outline-light">
+          <i class="fa-solid fa-list-ul"></i> Explore Registry
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Live Platform Metric Counters -->
+<section style="margin-top: -2rem; position: relative; z-index: 10; padding-bottom: 3rem;">
+  <div class="container">
+    <div class="stats-grid" style="box-shadow: var(--shadow-xl); border-radius: var(--radius-xl); background: white; padding: 1.5rem; border: 1px solid var(--border-color);">
+      <div class="stat-card stat-orange" style="border: none; box-shadow: none;">
+        <div class="stat-info">
+          <div class="stat-label">Total Lost Reports</div>
+          <div class="stat-value">{{ stats.total_lost }}</div>
+        </div>
+        <div class="stat-icon">
+          <i class="fa-solid fa-circle-exclamation"></i>
+        </div>
+      </div>
+
+      <div class="stat-card stat-blue" style="border: none; box-shadow: none;">
+        <div class="stat-info">
+          <div class="stat-label">Total Found Reports</div>
+          <div class="stat-value">{{ stats.total_found }}</div>
+        </div>
+        <div class="stat-icon">
+          <i class="fa-solid fa-box-open"></i>
+        </div>
+      </div>
+
+      <div class="stat-card stat-emerald" style="border: none; box-shadow: none;">
+        <div class="stat-info">
+          <div class="stat-label">Successfully Reunited</div>
+          <div class="stat-value">{{ stats.recovered_items }}</div>
+        </div>
+        <div class="stat-icon">
+          <i class="fa-solid fa-handshake-angle"></i>
+        </div>
+      </div>
+
+      <div class="stat-card stat-amber" style="border: none; box-shadow: none;">
+        <div class="stat-info">
+          <div class="stat-label">Recovery Rate</div>
+          <div class="stat-value">{{ stats.recovery_rate }}%</div>
+        </div>
+        <div class="stat-icon">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How It Works Section -->
+<section style="padding: 4rem 0; background: #ffffff;">
+  <div class="container">
+    <div style="text-align: center; max-width: 650px; margin: 0 auto 3.5rem;">
+      <span class="badge badge-category" style="margin-bottom: 0.5rem;">Simple & Trustworthy</span>
+      <h2 style="font-size: 2.2rem; margin-bottom: 0.75rem;">How LOSTLINK Works</h2>
+      <p style="color: var(--text-muted); font-size: 1.05rem;">
+        Reuniting belongings in three transparent, verifiable steps.
+      </p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem;">
+      <!-- Step 1 -->
+      <div class="card" style="padding: 2rem; text-align: center; border-radius: var(--radius-xl); position: relative;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--indigo-50); color: var(--indigo-600); font-size: 1.75rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-weight: 800;">
+          <i class="fa-solid fa-file-pen"></i>
+        </div>
+        <span style="font-size: 0.8rem; font-weight: 800; color: var(--indigo-600); text-transform: uppercase;">Step 01</span>
+        <h3 style="margin: 0.5rem 0 0.75rem;">Post Your Report</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Whether you lost something or found an item, submit key details including category, date, location landmarks, and photos.
+        </p>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="card" style="padding: 2rem; text-align: center; border-radius: var(--radius-xl); position: relative; border-color: var(--indigo-400); box-shadow: var(--shadow-lg);">
+        <div style="position: absolute; top: -12px; right: 24px; background: linear-gradient(135deg, var(--orange-500), var(--orange-600)); color: white; padding: 0.2rem 0.75rem; border-radius: var(--radius-full); font-size: 0.72rem; font-weight: 700;">
+          SMART AI CORE
+        </div>
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--orange-50); color: var(--orange-500); font-size: 1.75rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-weight: 800;">
+          <i class="fa-solid fa-brain"></i>
+        </div>
+        <span style="font-size: 0.8rem; font-weight: 800; color: var(--orange-600); text-transform: uppercase;">Step 02</span>
+        <h3 style="margin: 0.5rem 0 0.75rem;">Smart Match Engine</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Our algorithm compares category, text keywords, location proximity, and dates to automatically pair lost & found entries with a match score.
+        </p>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="card" style="padding: 2rem; text-align: center; border-radius: var(--radius-xl); position: relative;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--status-recovered-bg); color: var(--status-recovered); font-size: 1.75rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-weight: 800;">
+          <i class="fa-solid fa-shield-check"></i>
+        </div>
+        <span style="font-size: 0.8rem; font-weight: 800; color: var(--status-recovered); text-transform: uppercase;">Step 03</span>
+        <h3 style="margin: 0.5rem 0 0.75rem;">Claim & Reclaim</h3>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">
+          Submit verifiable ownership proof (unique marks, serial number, receipt). Once approved, securely coordinate handover!
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Recent Items Section -->
+<section style="padding: 4rem 0; background: var(--bg-page);">
+  <div class="container">
+    <div style="display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <span class="badge badge-category" style="margin-bottom: 0.5rem;">Live Feed</span>
+        <h2>Recent Lost & Found Reports</h2>
+        <p style="color: var(--text-muted);">Explore the latest activity on the campus network.</p>
+      </div>
+      <a href="{{ url_for('items') }}" class="btn btn-outline-primary">
+        View All Items <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <!-- Item Cards Grid -->
+    <div class="items-grid">
+      {% for item in recent_items %}
+        <div class="item-card">
+          <div class="item-card-image">
+            {% if item.image_url %}
+              <img src="{{ item.image_url }}" alt="{{ item.title }}">
+            {% else %}
+              <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1e293b, #0f172a); color: #94a3b8; font-size: 3rem;">
+                <i class="fa-solid fa-box"></i>
+              </div>
+            {% endif %}
+            <div class="item-card-badge">
+              {% if item.type == 'lost' %}
+                <span class="badge badge-lost"><i class="fa-solid fa-circle-exclamation"></i> Lost</span>
+              {% else %}
+                <span class="badge badge-found"><i class="fa-solid fa-circle-check"></i> Found</span>
+              {% endif %}
+            </div>
+            <div class="item-card-category">
+              {{ item.category|title|replace('_', ' ') }}
+            </div>
+          </div>
+
+          <div class="item-card-content">
+            <h4 class="item-card-title">{{ item.title }}</h4>
+            <p class="item-card-desc">{{ item.description }}</p>
+
+            <div class="item-meta-list">
+              <div class="item-meta-row">
+                <i class="fa-solid fa-location-dot" style="color: var(--indigo-500); width: 16px;"></i>
+                <span>{{ item.location }}</span>
+              </div>
+              <div class="item-meta-row">
+                <i class="fa-regular fa-calendar" style="color: var(--orange-500); width: 16px;"></i>
+                <span>{{ item.date_lost or item.date_found or item.date or 'Recently' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="item-card-actions">
+            <div>
+              {% if item.status == 'Recovered' or item.status == 'Returned to Owner' %}
+                <span class="badge badge-recovered">Recovered</span>
+              {% elif item.status == 'Claim Pending' or item.status == 'Under Claim' %}
+                <span class="badge badge-pending">Claim Pending</span>
+              {% else %}
+                <span class="badge" style="background: #f1f5f9; color: #475569;">Active</span>
+              {% endif %}
+            </div>
+            <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-sm btn-outline-primary">
+              View Details <i class="fa-solid fa-chevron-right"></i>
+            </a>
+          </div>
+        </div>
+      {% else %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; background: white; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+          <i class="fa-solid fa-box-open" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+          <h3>No items reported yet</h3>
+          <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Be the first one to file a report!</p>
+          <a href="{{ url_for('report_lost') }}" class="btn btn-primary">Report an Item</a>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- Categories Grid -->
+<section style="padding: 4rem 0; background: white;">
+  <div class="container">
+    <div style="text-align: center; max-width: 600px; margin: 0 auto 3rem;">
+      <span class="badge badge-category" style="margin-bottom: 0.5rem;">Organized Retrieval</span>
+      <h2>Browse by Category</h2>
+      <p style="color: var(--text-muted);">Quickly pinpoint what you're searching for.</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+      {% for cat in categories %}
+        <a href="{{ url_for('items', category=cat.id) }}" class="card" style="padding: 1.5rem; display: flex; flex-direction: column; align-items: center; text-align: center; text-decoration: none; border-radius: var(--radius-lg); transition: all var(--transition-normal);">
+          <div style="width: 54px; height: 54px; border-radius: var(--radius-md); background: var(--indigo-50); color: var(--indigo-600); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-bottom: 1rem;">
+            <i class="fa-solid {{ cat.icon }}"></i>
+          </div>
+          <h4 style="font-size: 1rem; color: var(--navy-900); margin-bottom: 0.25rem;">{{ cat.name }}</h4>
+          <span style="font-size: 0.8rem; color: var(--text-muted);">Explore reports &rarr;</span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- CTA Banner -->
+<section style="padding: 4rem 0; background: linear-gradient(135deg, var(--navy-900), #1e1b4b); color: white;">
+  <div class="container" style="text-align: center;">
+    <h2 style="color: white; font-size: 2.4rem; margin-bottom: 1rem;">Found an item that doesn't belong to you?</h2>
+    <p style="color: #cbd5e1; font-size: 1.15rem; max-width: 650px; margin: 0 auto 2rem;">
+      Be someone's campus hero today. It takes less than 60 seconds to record a found item and make a difference.
+    </p>
+    <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+      <a href="{{ url_for('report_found') }}" class="btn btn-lg btn-orange">
+        <i class="fa-solid fa-hand-holding-heart"></i> Report a Found Item
+      </a>
+      <a href="{{ url_for('register') }}" class="btn btn-lg btn-outline-light">
+        <i class="fa-solid fa-user-plus"></i> Join the Community
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

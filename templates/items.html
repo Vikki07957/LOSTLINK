@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Search & Browse Items - LOSTLINK{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 2.5rem 1rem;">
+  
+  <!-- Page Header -->
+  <div style="margin-bottom: 2rem;">
+    <span class="badge badge-category" style="margin-bottom: 0.5rem;">Public Registry</span>
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.4rem;">Browse Lost & Found Items</h1>
+    <p style="color: var(--text-muted);">Search through all reported items across campus and filter by category or location.</p>
+  </div>
+
+  <!-- Search & Filter Control Center -->
+  <div class="card" style="padding: 1.5rem; margin-bottom: 2rem; border-radius: var(--radius-lg); background: white; box-shadow: var(--shadow-sm);">
+    <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1rem; align-items: flex-end;">
+      
+      <!-- Keyword Search -->
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label" style="font-size: 0.82rem;">Search Keywords</label>
+        <div class="input-icon-group">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchQuery" class="form-control" placeholder="Search by title, brand, description..." value="{{ search_query }}">
+        </div>
+      </div>
+
+      <!-- Type Filter -->
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label" style="font-size: 0.82rem;">Item Type</label>
+        <select id="filterType" class="form-select">
+          <option value="all" {% if current_type == 'all' %}selected{% endif %}>All Items</option>
+          <option value="lost" {% if current_type == 'lost' %}selected{% endif %}>Lost Only</option>
+          <option value="found" {% if current_type == 'found' %}selected{% endif %}>Found Only</option>
+        </select>
+      </div>
+
+      <!-- Category Filter -->
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label" style="font-size: 0.82rem;">Category</label>
+        <select id="filterCategory" class="form-select">
+          <option value="all">All Categories</option>
+          {% for cat in categories %}
+            <option value="{{ cat.id }}" {% if current_category == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <!-- Location Filter -->
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label" style="font-size: 0.82rem;">Location Filter</label>
+        <div class="input-icon-group">
+          <i class="fa-solid fa-location-dot"></i>
+          <input type="text" id="filterLocation" class="form-control" placeholder="e.g. Library, Lab, Block A">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Active Filters & View Controls -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem;">
+      <div style="font-size: 0.9rem; color: var(--text-muted);">
+        Showing <strong id="resultCount" style="color: var(--navy-900);">{{ items|length }}</strong> items in registry
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 0.85rem; color: var(--text-muted); margin-right: 0.25rem;">View:</span>
+        <button id="viewGridBtn" class="btn btn-sm btn-primary"><i class="fa-solid fa-grip"></i> Grid</button>
+        <button id="viewTableBtn" class="btn btn-sm btn-outline-secondary"><i class="fa-solid fa-table-list"></i> Table</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Items Grid View -->
+  <div class="items-grid" id="itemsGrid">
+    {% for item in items %}
+      <div class="item-card-wrapper" 
+           data-title="{{ item.title|lower }}" 
+           data-desc="{{ item.description|lower }}" 
+           data-type="{{ item.type }}" 
+           data-category="{{ item.category }}" 
+           data-location="{{ item.location|lower }}">
+        
+        <div class="item-card">
+          <div class="item-card-image">
+            {% if item.image_url %}
+              <img src="{{ item.image_url }}" alt="{{ item.title }}" loading="lazy">
+            {% else %}
+              <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1e293b, #0f172a); color: #94a3b8; font-size: 3rem;">
+                <i class="fa-solid fa-box"></i>
+              </div>
+            {% endif %}
+
+            <div class="item-card-badge">
+              {% if item.type == 'lost' %}
+                <span class="badge badge-lost"><i class="fa-solid fa-circle-exclamation"></i> Lost</span>
+              {% else %}
+                <span class="badge badge-found"><i class="fa-solid fa-circle-check"></i> Found</span>
+              {% endif %}
+            </div>
+
+            <div class="item-card-category">
+              {{ item.category|title|replace('_', ' ') }}
+            </div>
+          </div>
+
+          <div class="item-card-content">
+            <h4 class="item-card-title">{{ item.title }}</h4>
+            <p class="item-card-desc">{{ item.description }}</p>
+
+            <div class="item-meta-list">
+              <div class="item-meta-row">
+                <i class="fa-solid fa-location-dot" style="color: var(--indigo-500); width: 16px;"></i>
+                <span>{{ item.location }}</span>
+              </div>
+              <div class="item-meta-row">
+                <i class="fa-regular fa-calendar" style="color: var(--orange-500); width: 16px;"></i>
+                <span>{{ item.date_lost or item.date_found or item.date }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="item-card-actions">
+            <div>
+              {% if item.status == 'Recovered' or item.status == 'Returned to Owner' %}
+                <span class="badge badge-recovered">Recovered</span>
+              {% elif item.status == 'Claim Pending' or item.status == 'Under Claim' %}
+                <span class="badge badge-pending">Claim Pending</span>
+              {% else %}
+                <span class="badge" style="background: #f1f5f9; color: #475569;">Available</span>
+              {% endif %}
+            </div>
+            <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-sm btn-outline-primary">
+              Details &rarr;
+            </a>
+          </div>
+        </div>
+
+      </div>
+    {% else %}
+      <div style="grid-column: 1 / -1; text-align: center; padding: 4rem 1rem; background: white; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+        <i class="fa-solid fa-magnifying-glass" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
+        <h3>No matching items found</h3>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Try adjusting your search terms or filters.</p>
+        <a href="{{ url_for('items') }}" class="btn btn-outline-primary">Reset Filters</a>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Items Table View (Hidden by default) -->
+  <div id="itemsTable" style="display: none;" class="card">
+    <div class="table-responsive">
+      <table class="table-custom">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Item Details</th>
+            <th>Category</th>
+            <th>Location</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+            <tr class="item-table-row">
+              <td>
+                {% if item.type == 'lost' %}
+                  <span class="badge badge-lost">Lost</span>
+                {% else %}
+                  <span class="badge badge-found">Found</span>
+                {% endif %}
+              </td>
+              <td>
+                <strong>{{ item.title }}</strong>
+                {% if item.brand %}<span style="font-size: 0.8rem; color: var(--text-muted);"> &bull; {{ item.brand }}</span>{% endif %}
+              </td>
+              <td><span class="badge badge-category">{{ item.category|title|replace('_', ' ') }}</span></td>
+              <td><i class="fa-solid fa-location-dot" style="color: var(--indigo-500);"></i> {{ item.location }}</td>
+              <td>{{ item.date_lost or item.date_found or item.date }}</td>
+              <td>
+                {% if item.status == 'Recovered' or item.status == 'Returned to Owner' %}
+                  <span class="badge badge-recovered">Recovered</span>
+                {% else %}
+                  <span class="badge" style="background: #f1f5f9; color: #475569;">Active</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('item_detail', item_id=item.id) }}" class="btn btn-sm btn-outline-primary">
+                  View
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/search.js') }}"></script>
+{% endblock %}
